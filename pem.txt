@@ -1,0 +1,1011 @@
+----------------Page Replacement---------------------
+
+#include<iostream>
+using namespace std;
+
+void display(int frames[],int f){
+	for(int i=0;i<f;i++){
+		if(frames[i]==-1){
+			cout<<" - ";
+		}else{
+			cout<<frames[i]<<" ";
+		}
+	}
+}
+
+void FIFO(int pages[],int n,int f){
+	
+	int index=0,pageFault=0;
+	int frames[10];
+	for(int i=0;i<f;i++){
+		frames[i]=-1;
+	}
+	
+	for(int i=0;i<n;i++){
+		int page=pages[i];
+		bool hit=false;
+		
+		for(int j=0;j<f;j++){
+			if(frames[j]==page){
+				hit = true;
+			}
+		}
+			if(!hit){
+				frames[index]=page;
+				index=(index+1)%f;
+				pageFault++;
+			}
+			
+			cout<<"Page "<<page<<" => ";
+			display(frames,f);
+			cout<<(hit?" (Hit) ":" (fault) ")<<endl;
+	
+	}
+		cout<<"total page fault: "<<pageFault;
+}
+
+void LRU(int pages[],int n,int f){
+	int frames[10];
+	int time=0,pageFault=0;
+	int lastUsed[10];
+	for(int i=0;i<f;i++){
+		frames[i]=-1;
+		lastUsed[i]=-1;
+	}
+	
+	for(int i=0;i<n;i++){
+		int page=pages[i];
+		bool hit=false;
+		
+		for(int j=0;j<f;j++){
+			if(frames[j]==page){
+				hit=true;
+				lastUsed[j]=time;
+			}
+		}
+		
+		if(!hit){
+			int pos=-1;
+			int min=100000;
+			for(int j=0;j<f;j++){
+				if(frames[j]==-1){
+					pos=j;
+					break;
+				}
+				
+				if(lastUsed[j]<min){
+					min=lastUsed[j];
+					pos=j;
+				}
+			}
+			frames[pos]=page;
+			lastUsed[pos]=time;
+			pageFault++;
+		}
+		time++;
+		
+		cout<<"Page "<<page<<" => ";
+		display(frames,f);
+		cout<<(hit?" (Hit) ":" (Miss) ")<<endl;
+	}
+	
+	cout<<"total page Fault: "<<pageFault;
+}
+
+
+void Optimal(int pages[],int n,int f){
+	
+	int frames[10];
+	int pageFault=0;
+	for(int i=0;i<f;i++){
+		frames[i]=-1;
+	}
+	for(int i=0;i<n;i++){
+		int page=pages[i];
+		bool hit=false;
+		
+		for(int j=0;j<f;j++){
+			if(page==frames[j]){
+				hit=true;
+			}
+		}
+		
+		if(!hit){
+			int pos=-1;
+			
+			for(int j=0;j<f;j++){
+				if(frames[j]==-1){
+					pos=j;
+					break;
+				}
+			}
+			
+			if(pos==-1){
+				int FarthestUse=-1;
+				for(int j=0;j<f;j++){
+					int k;
+					for(k=i+1;k<n;k++){
+						if(pages[k]==frames[j]){
+							break;
+					    }
+					}
+					if(k>FarthestUse){
+						FarthestUse=k;
+						pos=j;
+					}
+				}
+			}
+				frames[pos]=page;
+				pageFault++;
+		}
+		
+		cout<<"Page "<<page<<" => ";
+		display(frames,f);
+		cout<<(hit?" (Hit) ": " (fault) ")<<endl;
+	}
+	
+	cout<<"Total page Fault: "<<pageFault;
+}
+
+
+int main(){
+	int n,f;
+	int pages[50];
+	
+	cout<<"enter number of pages: ";
+	cin>>n;
+	
+	cout<<"enter page reference: ";
+	for(int i=0;i<n;i++){
+		cin>>pages[i];
+	}
+	
+	cout<<"enter frame size: ";
+	cin>>f;
+	
+    FIFO(pages,n,f);
+	LRU(pages,n,f);
+    Optimal(pages,n,f);
+}
+
+-----------------------------------SJF preemtive-----------------------------
+
+#include<iostream>
+using namespace std;
+
+int main(){
+	int n;
+	cout<<"enter number of process: ";
+	cin>>n;
+	int at[n],pid[n],bt[n],wt[n],tat[n],ct[n];
+	
+	for(int i=0;i<n;i++){
+		pid[i]=i+1;
+		cout<<"For Process P"<<pid[i]<<endl;
+		cout<<"enter AT: ";
+		cin>>at[i];
+		cout<<"enter BT: ";
+		cin>>bt[i];
+	}
+	
+	int rem[n];
+	for(int i=0;i<n;i++){
+		rem[i]=bt[i];
+	}
+	
+	int completed=0;
+	int t=0;
+	
+	while(completed<n){
+		int idx=-1;
+		int minBT=INT_MAX;
+		
+		for(int i=0;i<n;i++){
+			if(rem[i]>0 && at[i]<=t){
+				if(rem[i]<minBT){
+					minBT=rem[i];
+					idx=i;
+				}
+			}
+		}
+		
+		if(idx==-1){
+			t++;
+		}
+		
+		else{
+			rem[idx]--;
+			t++;
+			
+			if(rem[idx]==0){
+				ct[idx]=t;
+				tat[idx]=ct[idx]-at[idx];
+				wt[idx]=tat[idx]-bt[idx];
+				completed++;
+			}
+		}
+	}
+	
+		cout<<"PID\tAT\tBT\tCT\tTAT\tWT\n";
+	for(int i=0;i<n;i++){
+		cout<<pid[i]<<"\t"<<at[i]<<"\t"<<bt[i]<<"\t"<<ct[i]<<"\t"<<tat[i]<<"\t"<<wt[i]<<endl;
+	}
+}
+
+------------------------------------------SJF Non- Preemtive-------------------------------------------------
+
+
+#include<iostream>
+using namespace std;
+
+
+
+void FCFS(){
+	
+}
+int main(){
+	int n;
+	cout<<"enter number of process: ";
+	cin>>n;
+	int at[n],pid[n],bt[n],wt[n],tat[n],ct[n];
+	
+	for(int i=0;i<n;i++){
+		pid[i]=i+1;
+		cout<<"For Process P"<<pid[i]<<endl;
+		cout<<"enter AT: ";
+		cin>>at[i];
+		cout<<"enter BT: ";
+		cin>>bt[i];
+	}
+	
+	int completed=0;
+	int done[n]={0};
+	int t=0;
+	
+	while(completed<n){
+		int idx=-1;
+		int minAt=INT_MAX;
+		
+		for(int i=0;i<n;i++){
+			if(!done[i] && at[i]<=t){
+				if(idx==-1 || bt[i]<minAt){
+					minAt=bt[i];
+					idx=i;
+				}
+			}
+		}
+		
+		if(idx==-1){
+			t++;
+		}
+		else{
+			t+=bt[idx];
+			ct[idx]=t;
+			tat[idx]=ct[idx]-at[idx];
+			wt[idx]=tat[idx]-bt[idx];
+			
+			completed++;
+			done[idx]=1;
+		}
+	}
+	
+		cout<<"PID\tAT\tBT\tCT\tTAT\tWT\n";
+	for(int i=0;i<n;i++){
+		cout<<pid[i]<<"\t"<<at[i]<<"\t"<<bt[i]<<"\t"<<ct[i]<<"\t"<<tat[i]<<"\t"<<wt[i]<<endl;
+	}
+}
+
+
+---------------------------------priority preemtive---------------------------------
+#include<iostream>
+using namespace std;
+
+int main(){
+	int n;
+	cout<<"enter number of process: ";
+	cin>>n;
+	int at[n],pid[n],bt[n],wt[n],tat[n],ct[n],pr[n];
+	
+	for(int i=0;i<n;i++){
+		pid[i]=i+1;
+		cout<<"For Process P"<<pid[i]<<endl;
+		cout<<"enter AT: ";
+		cin>>at[i];
+		cout<<"enter BT: ";
+		cin>>bt[i];
+		cout<<"enter priority: ";
+		cin>>pr[i];
+	}
+	
+	int rem[n];
+	for(int i=0;i<n;i++){
+		rem[i]=bt[i];
+	}
+	
+	int completed=0;
+	int t=0;
+	
+	while(completed<n){
+		int idx=-1;
+		int prAt=INT_MAX;
+		
+		for(int i=0;i<n;i++){
+			if(rem[i]>0 && at[i]<=t){
+				if(idx==-1 || pr[i]<prAt){
+					idx=i;
+					prAt=pr[i];
+				}
+			}
+		}
+		
+		if(idx==-1){
+			t++;
+		}
+		else{
+			rem[idx]--;
+			t++;
+			
+			
+			if(rem[idx]==0){
+				ct[idx]=t;
+				tat[idx]=ct[idx]-at[idx];
+				wt[idx]=tat[idx]-bt[idx];
+				
+				completed++;
+			}
+		}
+	}
+	
+		cout<<"PID\tAT\tBT\tCT\tTAT\tWT\nPR";
+	for(int i=0;i<n;i++){
+		cout<<pid[i]<<"\t"<<at[i]<<"\t"<<bt[i]<<"\t"<<ct[i]<<"\t"<<tat[i]<<"\t"<<wt[i]<<"\t"<<pr[i]<<endl;
+	}
+}
+
+------------------------------------------priority non preemtive----------------------------------
+#include<iostream>
+using namespace std;
+
+int main(){
+	int n;
+	cout<<"enter number of process: ";
+	cin>>n;
+	int at[n],pid[n],bt[n],wt[n],tat[n],ct[n],pr[n];
+	
+	for(int i=0;i<n;i++){
+		pid[i]=i+1;
+		cout<<"For Process P"<<pid[i]<<endl;
+		cout<<"enter AT: ";
+		cin>>at[i];
+		cout<<"enter BT: ";
+		cin>>bt[i];
+		cout<<"enter priority: ";
+		cin>>pr[i];
+	}
+	
+	int done[n]={0};
+	int completed=0;
+	int t=0;
+	
+	while(completed<n){
+		int idx=-1;
+		int prAt=INT_MAX;
+		
+		for(int i=0;i<n;i++){
+			if(!done[i] && at[i]<=t){
+				if(idx==-1 || pr[i]<prAt){
+					prAt=pr[i];
+					idx=i;
+				}
+			}
+		}
+		
+		if(idx==-1){
+			t++;
+		}
+		else{
+			t+=bt[idx];
+			ct[idx]=t;
+			tat[idx]=ct[idx]-at[idx];
+			wt[idx]=tat[idx]-bt[idx];
+			
+			completed++;
+			done[idx]=1;
+		}
+	}
+	
+	
+		cout<<"PID\tAT\tBT\tCT\tTAT\tWT\nPR";
+	for(int i=0;i<n;i++){
+		cout<<pid[i]<<"\t"<<at[i]<<"\t"<<bt[i]<<"\t"<<ct[i]<<"\t"<<tat[i]<<"\t"<<wt[i]<<"\t"<<pr[i]<<endl;
+	}
+}
+
+---------------------------------------Round robin-------------------------------------------
+#include<iostream>
+#include<queue>
+using namespace std;
+
+int main(){
+	int n;
+	cout<<"enter number of process: ";
+	cin>>n;
+	
+	int pid[n],at[n],bt[n],ct[n],tat[n],wt[n];
+	int qt;
+	
+	for(int i=0;i<n;i++){
+		pid[i]=i+1;
+		cout<<"For process P"<<pid[i]<<" => \n";
+		cout<<"AT: ";
+		cin>>at[i];
+		cout<<"BT: ";
+		cin>>bt[i];
+	}
+	
+	cout<<"enter quantum time: ";
+	cin>>qt;
+	
+	int rem[n];
+	for(int i=0;i<n;i++){
+		rem[i]=bt[i];
+	}
+	
+	queue<int>q;
+	
+	bool added[n]={false};
+	for(int i=0;i<n;i++){
+		if(at[i]==0){
+			q.push(i);
+			added[i]=true;
+		}
+	}
+	
+	
+	int completed=0;
+	int t=0;
+	
+	while(completed<n){
+		if(q.empty()){
+			t++;
+			
+			for(int i=0;i<n;i++){
+				if(at[i]<=t && !added[i]){
+					q.push(i);
+					added[i]=true;
+				}
+			}
+			
+			continue;
+		}
+		
+		
+		int idx=q.front();
+		q.pop();
+		
+		int exec=(rem[idx]>qt)?qt:rem[idx];
+		rem[idx]-=exec;
+		t+=exec;
+		
+		for(int i=0;i<n;i++){
+			if(at[i]<=t && !added[i]){
+				q.push(i);
+				added[i]=true;
+			}
+		}
+		
+		if(rem[idx]==0){
+			ct[idx]=t;
+			tat[idx]=ct[idx]-at[idx];
+			wt[idx]=tat[idx]-bt[idx];
+			completed++;
+		}else{
+			q.push(idx);
+		}
+	}
+	
+	cout<<"PID\tAT\tBT\tWT\tTAT\tCT"<<endl;
+	for(int i=0;i<n;i++){
+		cout<<"P"<<pid[i]<<"\t"<<at[i]<<"\t"<<bt[i]<<"\t"<<wt[i]<<"\t"<<tat[i]<<"\t"<<ct[i]<<endl;
+	}
+}
+--------------------------------------------------FCFS--------------------------------------------------
+#include<iostream>
+using namespace std;
+
+int main(){
+	int n;
+	cout<<"enter number of process: ";
+	cin>>n;
+	int at[n],pid[n],bt[n],wt[n],tat[n],ct[n];
+	
+	for(int i=0;i<n;i++){
+		pid[i]=i+1;
+		cout<<"For Process P"<<pid[i]<<endl;
+		cout<<"enter AT: ";
+		cin>>at[i];
+		cout<<"enter BT: ";
+		cin>>bt[i];
+	}
+	
+	int completed=0;
+	int done[n]={0};
+	int t=0;
+	
+	while(completed<n){
+		int idx=-1;
+		int minAt=INT_MAX;
+		
+		for(int i=0;i<n;i++){
+			if(!done[i] && at[i]<=t ){
+				if(idx==-1 || at[i]<minAt){
+					idx=i;
+					minAt=at[i];
+				}
+			}
+		}
+		
+		if(idx==-1){
+			t++;
+		}
+		else{
+			t+=bt[idx];
+			ct[idx]=t;
+			tat[idx]=ct[idx]-at[idx];
+			wt[idx]=tat[idx]-bt[idx];
+			
+			done[idx]=1;
+			completed++;
+		}
+	}
+	
+	int twt=0,ttat=0;
+	for(int i=0;i<n;i++){
+		twt+=wt[i];
+		ttat+=tat[i];
+	}
+	cout<<"PID\tAT\tBT\tCT\tTAT\tWT\n";
+	for(int i=0;i<n;i++){
+		cout<<pid[i]<<"\t"<<at[i]<<"\t"<<bt[i]<<"\t"<<ct[i]<<"\t"<<tat[i]<<"\t"<<wt[i]<<endl;
+	}
+	
+	cout<<"Avg WT: "<<float(twt/n)<<endl;
+	cout<<"Avg TAT: "<<float(ttat/n);
+	
+}
+------------------------------------------Banker Algorithm---------------------------------------------
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n, m; // n = processes, m = resources
+
+    cout << "Enter number of processes: ";
+    cin >> n;
+
+    cout << "Enter number of resource types: ";
+    cin >> m;
+
+    int alloc[10][10], maxNeed[10][10], avail[10], need[10][10];
+    int finish[10], safeSeq[10];
+
+    // Allocation Matrix
+    cout << "\nEnter Allocation Matrix (" << n << "x" << m << "):\n";
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
+            cin >> alloc[i][j];
+
+    // Maximum Requirement Matrix
+    cout << "\nEnter Maximum Matrix (" << n << "x" << m << "):\n";
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
+            cin >> maxNeed[i][j];
+
+    // Available Resources
+    cout << "\nEnter Available Resources (" << m << " values): ";
+    for (int j = 0; j < m; j++)
+        cin >> avail[j];
+
+    // Calculate Need Matrix
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
+            need[i][j] = maxNeed[i][j] - alloc[i][j];
+
+    // Initialize finish array
+    for (int i = 0; i < n; i++)
+        finish[i] = 0;
+
+    int count = 0;
+
+    // Banker's Algorithm Safety Check
+    while (count < n) {
+        bool found = false;
+
+        for (int p = 0; p < n; p++) {
+            if (finish[p] == 0) {
+                int j;
+
+                // Check if need <= available
+                for (j = 0; j < m; j++) {
+                    if (need[p][j] > avail[j])
+                        break;
+                }
+
+                // If all resources can be allocated
+                if (j == m) {
+                    for (int k = 0; k < m; k++)
+                        avail[k] += alloc[p][k];
+
+                    safeSeq[count++] = p; // add process to safe sequence
+                    finish[p] = 1;
+                    found = true;
+                }
+            }
+        }
+
+        if (!found) {
+            cout << "\nSystem is in UNSAFE state (Deadlock possible)\n";
+            return 0;
+        }
+    }
+
+    // Print Safe Sequence
+    cout << "\nSystem is in SAFE state.\nSafe Sequence: ";
+    for (int i = 0; i < n; i++)
+        cout << "P" << safeSeq[i] << " ";
+
+    cout << "\n";
+    return 0;
+}
+
+------------------------------------reader writer(semaphore)---------------------------------------
+
+#include <iostream>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+
+using namespace std;
+
+int readCount = 0;
+int data = 0;
+
+sem_t mutexLock;   // Protects readCount
+sem_t writeLock;   // Ensures exclusive writer access
+
+// ------------ Reader Section ------------
+void* reader(void* arg) {
+    int readerID = *((int*)arg);
+
+    // Entry section
+    sem_wait(&mutexLock);
+    readCount++;
+    if (readCount == 1)
+        sem_wait(&writeLock);   // First reader locks writing
+    sem_post(&mutexLock);
+
+    // Critical section (Reading)
+    cout << "📘 Reader " << readerID << " is reading data = " << data << endl;
+    sleep(1);
+
+    // Exit section
+    sem_wait(&mutexLock);
+    readCount--;
+    if (readCount == 0)
+        sem_post(&writeLock);   // Last reader unlocks writing
+    sem_post(&mutexLock);
+
+    cout << "✔ Reader " << readerID << " finished reading.\n";
+    pthread_exit(NULL);
+}
+
+// ------------ Writer Section ------------
+void* writer(void* arg) {
+    int writerID = *((int*)arg);
+
+    // Entry section
+    sem_wait(&writeLock);   // Writer gets exclusive access
+
+    // Critical section (Writing)
+    data++;
+    cout << "✏ Writer " << writerID << " is writing data = " << data << endl;
+    sleep(2);
+
+    // Exit section
+    sem_post(&writeLock);
+    cout << "✔ Writer " << writerID << " finished writing.\n";
+
+    pthread_exit(NULL);
+}
+
+// ------------ Main Function ------------
+int main() {
+    int nReaders, nWriters;
+
+    cout << "Enter number of readers: ";
+    cin >> nReaders;
+    cout << "Enter number of writers: ";
+    cin >> nWriters;
+
+    pthread_t readers[20], writers[20];
+    int readerIDs[20], writerIDs[20];
+
+    sem_init(&mutexLock, 0, 1);
+    sem_init(&writeLock, 0, 1);
+
+    // Create reader threads
+    for (int i = 0; i < nReaders; i++) {
+        readerIDs[i] = i + 1;
+        pthread_create(&readers[i], NULL, reader, &readerIDs[i]);
+        sleep(1); // small delay
+    }
+
+    // Create writer threads
+    for (int i = 0; i < nWriters; i++) {
+        writerIDs[i] = i + 1;
+        pthread_create(&writers[i], NULL, writer, &writerIDs[i]);
+        sleep(1);
+    }
+
+    // Wait for all readers
+    for (int i = 0; i < nReaders; i++)
+        pthread_join(readers[i], NULL);
+
+    // Wait for all writers
+    for (int i = 0; i < nWriters; i++)
+        pthread_join(writers[i], NULL);
+
+    sem_destroy(&mutexLock);
+    sem_destroy(&writeLock);
+
+    cout << "\nAll readers and writers have finished.\n";
+    return 0;
+}
+
+
+------------------------------IPC-----------------------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+void processA(int writefd);  
+void processB(int readfd);
+
+// ------------ Process A (Parent writes) ------------
+void processA(int writefd)
+{
+    int len;
+    char buff[80];
+
+    printf("Enter a string: ");
+    fgets(buff, 80, stdin);
+
+    len = strlen(buff);
+
+    // Remove newline character
+    if (buff[len - 1] == '\n')
+        buff[len - 1] = '\0';
+
+    write(writefd, buff, strlen(buff));
+}
+
+// ------------ Process B (Child reads & reverses) ------------
+void processB(int readfd)
+{
+    int n, i, j;
+    char str[80], temp;
+
+    n = read(readfd, str, 80);
+    str[n] = '\0';
+
+    i = 0;
+    j = strlen(str) - 1;
+
+    while (i < j)
+    {
+        temp = str[i];
+        str[i] = str[j];
+        str[j] = temp;
+        i++;
+        j--;
+    }
+
+    printf("Reversed string: %s\n", str);
+}
+
+// ------------ Main Function ------------
+int main(void)
+{
+    int pipe1[2];
+    pid_t childpid;
+
+    if (pipe(pipe1) == -1)
+    {
+        perror("Pipe failed");
+        exit(1);
+    }
+
+    childpid = fork();
+
+    if (childpid < 0)
+    {
+        perror("Fork failed");
+        exit(1);
+    }
+
+    if (childpid == 0)
+    {
+        // Child process
+        close(pipe1[1]);          // Close write end
+        processB(pipe1[0]);       // Read & reverse
+        close(pipe1[0]);
+        exit(0);
+    }
+    else
+    {
+        // Parent process
+        close(pipe1[0]);          // Close read end
+        processA(pipe1[1]);       // Write string
+        close(pipe1[1]);
+        wait(NULL);
+    }
+
+    return EXIT_SUCCESS;
+}
+
+
+------------------------------------Linux cmd menu driven--------------------------------------
+#!/bin/bash
+
+echo "===== File & Directory Operations Menu ====="
+echo "1. Create a file"
+echo "2. Create a directory"
+echo "3. Delete a file"
+echo "4. Delete a directory"
+echo "5. List files"
+echo "6. Display file content"
+echo "7. Exit"
+
+while true
+do
+    echo -n "Enter your choice: "
+    read choice
+
+    case $choice in
+
+        1)
+            echo -n "Enter filename: "
+            read fname
+            touch "$fname"
+            echo "File '$fname' created."
+            ;;
+
+        2)
+            echo -n "Enter directory name: "
+            read dname
+            mkdir "$dname"
+            echo "Directory '$dname' created."
+            ;;
+
+        3)
+            echo -n "Enter filename to delete: "
+            read fname
+            rm -f "$fname"
+            echo "File '$fname' deleted."
+            ;;
+
+        4)
+            echo -n "Enter directory name to delete: "
+            read dname
+            rm -rf "$dname"
+            echo "Directory '$dname' deleted."
+            ;;
+
+        5)
+            ls -l
+            ;;
+
+        6)
+            echo -n "Enter filename to display: "
+            read fname
+            cat "$fname"
+            ;;
+
+        7)
+            echo "Exiting..."
+            exit 0
+            ;;
+
+        *)
+            echo "Invalid choice. Try again."
+            ;;
+    esac
+done
+
+---------------------------------------file permission---------------------------------
+#!/bin/bash
+
+echo "===== File Permission Checker & Setter ====="
+
+echo -n "Enter file/directory name: "
+read fname
+
+if [ ! -e "$fname" ]; then
+    echo "Error: '$fname' does not exist!"
+    exit 1
+fi
+
+echo
+echo "Current permissions for $fname:"
+ls -l "$fname"
+
+echo
+echo "Enter new permission (example: 755, 644, 700): "
+read perm
+
+chmod $perm "$fname"
+
+echo "Updated permissions:"
+ls -l "$fname"
+
+echo "Permissions changed successfully!"
+
+------------------------------------disk_usage.sh---------------------------------
+#!/bin/bash
+
+echo "====== Disk Space Usage ======"
+df -h | awk '
+NR==1 || $1 ~ /^\// {
+    printf "Filesystem: %s\n", $1;
+    printf "  Total Size : %s\n", $2;
+    printf "  Used       : %s\n", $3;
+    printf "  Available  : %s\n", $4;
+    printf "  Used %%     : %s\n\n", $5;
+}'
+
+--------------------------------------Linux cmd --------------------------------------
+
+✅ 20 Linux Commands (Single Text)
+
+ls – List files and directories
+
+cd – Change directory
+
+pwd – Show current working directory
+
+mkdir – Create a directory
+
+rmdir – Remove an empty directory
+
+rm – Delete files or directories
+
+cp – Copy files or directories
+
+mv – Move or rename files
+
+cat – Display file contents
+
+touch – Create an empty file
+
+chmod – Change file permissions
+
+chown – Change file owner
+
+df -h – Show disk space usage
+
+du -h – Show folder/file size
+
+ps – Display running processes
+
+top – Show real-time system activity
+
+kill – Terminate a process
+
+man – Show manual/help for commands
+
+grep – Search text in files
+
+find – Search files and directories
+-------------------------------------------end------------------------------------------------
