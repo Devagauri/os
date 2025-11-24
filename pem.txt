@@ -1,69 +1,17 @@
 
 #include <iostream>
-#include <vector>
 #include <cstring>
 using namespace std;
-
-// ---------------- HAMMING CODE (7,4) ----------------
-
-int parityCalc(int a, int b, int c) {
-    return a ^ b ^ c;
-}
-
-void hammingCode() {
-    vector<int> data(4), h(7), recv(7);
-
-    cout << "\nEnter 4 data bits (d1 d2 d3 d4): ";
-    for (int i = 0; i < 4; i++)
-        cin >> data[i];
-
-    // Assign data bits
-    h[2] = data[0];
-    h[4] = data[1];
-    h[5] = data[2];
-    h[6] = data[3];
-
-    // Parity bits
-    h[0] = parityCalc(h[2], h[4], h[6]);
-    h[1] = parityCalc(h[2], h[5], h[6]);
-    h[3] = parityCalc(h[4], h[5], h[6]);
-
-    cout << "\nGenerated Hamming Code: ";
-    for (int i = 0; i < 7; i++)
-        cout << h[i] << " ";
-
-    cout << "\n\nEnter received 7 bits: ";
-    for (int i = 0; i < 7; i++)
-        cin >> recv[i];
-
-    // Syndrome
-    int s1 = parityCalc(recv[2], recv[4], recv[6]) ^ recv[0];
-    int s2 = parityCalc(recv[2], recv[5], recv[6]) ^ recv[1];
-    int s4 = parityCalc(recv[4], recv[5], recv[6]) ^ recv[3];
-
-    int errorPos = s4 * 4 + s2 * 2 + s1;
-
-    if (errorPos == 0) {
-        cout << "\nNo error detected.\n";
-    } else {
-        cout << "\nError at bit position: " << errorPos << endl;
-        recv[errorPos - 1] ^= 1;
-
-        cout << "Corrected code: ";
-        for (int i = 0; i < 7; i++)
-            cout << recv[i] << " ";
-        cout << endl;
-    }
-}
 
 // ---------------- PARITY CHECK ----------------
 
 void parityCheck() {
     int n, bit, count = 0, parity;
+
     cout << "\nEnter number of bits: ";
     cin >> n;
 
-    cout << "Enter bits: ";
+    cout << "Enter data bits: ";
     for (int i = 0; i < n; i++) {
         cin >> bit;
         if (bit == 1) count++;
@@ -72,30 +20,31 @@ void parityCheck() {
     cout << "Enter received parity bit: ";
     cin >> parity;
 
-    if ((count % 2 == 0 && parity == 0) || 
-        (count % 2 == 1 && parity == 1))
+    if ((count % 2 == 0 && parity == 0) || (count % 2 == 1 && parity == 1))
         cout << "NO ERROR.\n";
     else
         cout << "ERROR DETECTED.\n";
 }
 
-// ---------------- CRC ----------------
+// ---------------- XOR FOR CRC ----------------
 
 void xorOp(char *a, const char *b) {
     for (int i = 0; i < strlen(b); i++)
         a[i] = (a[i] == b[i]) ? '0' : '1';
 }
 
+// ---------------- CRC ----------------
+
 void crc() {
     char data[50], div[20], temp[50];
 
     cout << "\nEnter data bits: ";
     cin >> data;
+
     cout << "Enter divisor: ";
     cin >> div;
 
     strcpy(temp, data);
-
     int dl = strlen(div);
     int len = strlen(data);
 
@@ -115,6 +64,43 @@ void crc() {
     cout << endl;
 }
 
+// ---------------- HAMMING CODE (7,4) ----------------
+
+void hammingCode() {
+    int d[4], p[3], r[7];
+
+    cout << "\nEnter 4 data bits (d1 d2 d3 d4): ";
+    cin >> d[0] >> d[1] >> d[2] >> d[3];
+
+    // Parity
+    p[0] = d[0] ^ d[1] ^ d[3];  // p1
+    p[1] = d[0] ^ d[2] ^ d[3];  // p2
+    p[2] = d[1] ^ d[2] ^ d[3];  // p4
+
+    cout << "Generated Hamming code: ";
+    cout << p[0] << p[1] << d[0] << p[2] << d[1] << d[2] << d[3] << endl;
+
+    cout << "\nEnter received 7 bits: ";
+    for (int i = 0; i < 7; i++) cin >> r[i];
+
+    // Syndrome
+    int c1 = r[0] ^ r[2] ^ r[4] ^ r[6];
+    int c2 = r[1] ^ r[2] ^ r[5] ^ r[6];
+    int c3 = r[3] ^ r[4] ^ r[5] ^ r[6];
+
+    int errorPos = c1 + 2 * c2 + 4 * c3;
+
+    if (errorPos == 0)
+        cout << "No error.\n";
+    else {
+        cout << "Error at position: " << errorPos << endl;
+        r[errorPos - 1] ^= 1;
+        cout << "Corrected code: ";
+        for (int i = 0; i < 7; i++) cout << r[i];
+        cout << endl;
+    }
+}
+
 // ---------------- MAIN MENU ----------------
 
 int main() {
@@ -122,20 +108,20 @@ int main() {
     char ch;
 
     do {
-        cout << "\n========= ERROR CONTROL MENU =========\n";
-        cout << "1. Hamming Code (7,4)\n";
-        cout << "2. Parity Check\n";
-        cout << "3. CRC\n";
+        cout << "\n========== ERROR CONTROL MENU ==========\n";
+        cout << "1. Parity Check\n";
+        cout << "2. CRC\n";
+        cout << "3. Hamming Code (7,4)\n";
         cout << "4. Exit\n";
-        cout << "Enter choice: ";
+        cout << "Enter your choice: ";
         cin >> choice;
 
         switch (choice) {
-            case 1: hammingCode(); break;
-            case 2: parityCheck(); break;
-            case 3: crc(); break;
+            case 1: parityCheck(); break;
+            case 2: crc(); break;
+            case 3: hammingCode(); break;
             case 4: return 0;
-            default: cout << "Invalid choice.\n";
+            default: cout << "Invalid choice!\n";
         }
 
         cout << "\nDo you want to continue? (y/n): ";
@@ -145,7 +131,7 @@ int main() {
 
     return 0;
 }
-_________________________________________________________________________________________________________________________________________________________________________________________
+________________________________________________________________________________________________________________________________________________________________________________
 SLIDING WINDOW
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #include <iostream>
@@ -670,6 +656,68 @@ int main() {
 
         cout << "Server: " << buffer << endl;
     }
+
+    close(clientSocket);
+    return 0;
+}
+udp server
+#include <iostream>
+#include <cstring>
+#include <unistd.h>
+#include <arpa/inet.h>
+using namespace std;
+
+int main() {
+    int serverSocket;
+    char buffer[1024] = {0};
+
+    serverSocket = socket(AF_INET, SOCK_DGRAM, 0);
+
+    struct sockaddr_in serverAddr, clientAddr;
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(8080);
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
+
+    bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+
+    cout << "UDP Server waiting for messages..." << endl;
+
+    socklen_t len = sizeof(clientAddr);
+
+    recvfrom(serverSocket, buffer, 1024, 0, (struct sockaddr*)&clientAddr, &len);
+    cout << "Client says: " << buffer << endl;
+
+    char msg[] = "Hello from UDP Server!";
+    sendto(serverSocket, msg, strlen(msg), 0, (struct sockaddr*)&clientAddr, len);
+
+    close(serverSocket);
+    return 0;
+}
+udp client
+#include <iostream>
+#include <cstring>
+#include <unistd.h>
+#include <arpa/inet.h>
+using namespace std;
+
+int main() {
+    int clientSocket;
+    char buffer[1024] = {0};
+
+    clientSocket = socket(AF_INET, SOCK_DGRAM, 0);
+
+    struct sockaddr_in serverAddr;
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(8080);
+    serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    char msg[] = "Hello UDP Server!";
+    sendto(clientSocket, msg, strlen(msg), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+
+    socklen_t len = sizeof(serverAddr);
+    recvfrom(clientSocket, buffer, 1024, 0, (struct sockaddr*)&serverAddr, &len);
+
+    cout << "Server says: " << buffer << endl;
 
     close(clientSocket);
     return 0;
