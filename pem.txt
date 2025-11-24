@@ -722,3 +722,14 @@ int main() {
     close(clientSocket);
     return 0;
 }
+
+| Pin No. | Side A (568-B Colors) | Side B (Crossover Colors) |
+| ------- | --------------------- | ------------------------- |
+| **1**   | White–Orange          | White–Green               |
+| **2**   | Orange                | Green                     |
+| **3**   | White–Green           | White–Orange              |
+| **4**   | Blue                  | Blue                      |
+| **5**   | White–Blue            | White–Blue                |
+| **6**   | Green                 | Orange                    |
+| **7**   | White–Brown           | White–Brown               |
+| **8**   | Brown                 | Brown                     |
