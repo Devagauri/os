@@ -1,89 +1,117 @@
-
+------------------------PARITY/CRC/HAMMING-------------------------
 #include <iostream>
 #include <cstring>
 using namespace std;
 
-// ---------------- PARITY CHECK ----------------
-
+// ------------ EVEN PARITY ERROR CHECK ------------
 void parityCheck() {
-    int n, bit, count = 0, parity;
+    char sent[50], received[50];
 
-    cout << "\nEnter number of bits: ";
-    cin >> n;
+    cout << "\nEnter SENT data bits: ";
+    cin >> sent;
 
-    cout << "Enter data bits: ";
-    for (int i = 0; i < n; i++) {
-        cin >> bit;
-        if (bit == 1) count++;
+    cout << "Enter RECEIVED data bits: ";
+    cin >> received;
+
+    int countSent = 0, countRecv = 0;
+
+    for (int i = 0; sent[i] != '\0'; i++)
+        if (sent[i] == '1') countSent++;
+
+    for (int i = 0; received[i] != '\0'; i++)
+        if (received[i] == '1') countRecv++;
+
+    cout << "\nSent     : " << sent << endl;
+    cout << "Received : " << received << endl;
+
+    // EVEN parity check
+    if (countSent % 2 == countRecv % 2)
+        cout << "Even Parity: No error detected.\n";
+    else
+        cout << "Even Parity: Error detected!\n";
+
+    // locate bit position mismatch
+    int pos = -1;
+    int len = strlen(sent);
+
+    for (int i = 0; i < len; i++) {
+        if (sent[i] != received[i]) {
+            pos = i + 1;
+            break;
+        }
     }
 
-    cout << "Enter received parity bit: ";
-    cin >> parity;
-
-    if ((count % 2 == 0 && parity == 0) || (count % 2 == 1 && parity == 1))
-        cout << "NO ERROR.\n";
+    if (pos != -1)
+        cout << "Error located at bit position: " << pos << endl;
     else
-        cout << "ERROR DETECTED.\n";
+        cout << "No bit position mismatch.\n";
 }
 
-// ---------------- XOR FOR CRC ----------------
 
-void xorOp(char *a, const char *b) {
-    for (int i = 0; i < strlen(b); i++)
-        a[i] = (a[i] == b[i]) ? '0' : '1';
+// ------------ CRC ERROR CHECK ------------
+void crcCheck() {
+    char sent[100], received[100], divisor[20], temp[100];
+    int i, j;
+
+    cout << "\nEnter SENT data+CRC: ";
+    cin >> sent;
+
+    cout << "Enter RECEIVED data+CRC: ";
+    cin >> received;
+
+    cout << "Enter generator polynomial (e.g. 1101): ";
+    cin >> divisor;
+
+    strcpy(temp, received);
+
+    int datalen = strlen(temp);
+    int divlen = strlen(divisor);
+
+    for (i = 0; i <= datalen - divlen; i++) {
+        if (temp[i] == '1') {
+            for (j = 0; j < divlen; j++)
+                temp[i + j] = (temp[i + j] == divisor[j]) ? '0' : '1';
+        }
+    }
+
+    bool error = false;
+    for (i = datalen - divlen + 1; i < datalen; i++)
+        if (temp[i] == '1') error = true;
+
+    if (error) {
+        cout << "CRC: Error detected!" << endl;
+
+        int pos = -1;
+        for (i = 0; sent[i] != '\0'; i++)
+            if (sent[i] != received[i]) { pos = i + 1; break; }
+
+        if (pos != -1)
+            cout << "Error at bit position: " << pos << endl;
+    }
+    else
+        cout << "CRC: No error detected.\n";
 }
 
-// ---------------- CRC ----------------
 
-void crc() {
-    char data[50], div[20], temp[50];
-
-    cout << "\nEnter data bits: ";
-    cin >> data;
-
-    cout << "Enter divisor: ";
-    cin >> div;
-
-    strcpy(temp, data);
-    int dl = strlen(div);
-    int len = strlen(data);
-
-    // Append zeros
-    for (int i = 0; i < dl - 1; i++)
-        temp[len + i] = '0';
-    temp[len + dl - 1] = '\0';
-
-    for (int i = 0; i <= len; i++)
-        if (temp[i] == '1')
-            xorOp(temp + i, div);
-
-    cout << "CRC Remainder: ";
-    for (int i = len; i < len + dl - 1; i++)
-        cout << temp[i];
-
-    cout << endl;
-}
-
-// ---------------- HAMMING CODE (7,4) ----------------
-
-void hammingCode() {
+// ------------ HAMMING (7,4) CODE WITH ERROR DETECTION & CORRECTION ------------
+void hammingCheck() {
     int d[4], p[3], r[7];
 
     cout << "\nEnter 4 data bits (d1 d2 d3 d4): ";
     cin >> d[0] >> d[1] >> d[2] >> d[3];
 
-    // Parity
+    // Parity bits (your formula)
     p[0] = d[0] ^ d[1] ^ d[3];  // p1
     p[1] = d[0] ^ d[2] ^ d[3];  // p2
     p[2] = d[1] ^ d[2] ^ d[3];  // p4
 
-    cout << "Generated Hamming code: ";
+    cout << "Generated Hamming code (p1 p2 d1 p4 d2 d3 d4): ";
     cout << p[0] << p[1] << d[0] << p[2] << d[1] << d[2] << d[3] << endl;
 
     cout << "\nEnter received 7 bits: ";
     for (int i = 0; i < 7; i++) cin >> r[i];
 
-    // Syndrome
+    // Syndrome bits
     int c1 = r[0] ^ r[2] ^ r[4] ^ r[6];
     int c2 = r[1] ^ r[2] ^ r[5] ^ r[6];
     int c3 = r[3] ^ r[4] ^ r[5] ^ r[6];
@@ -94,245 +122,169 @@ void hammingCode() {
         cout << "No error.\n";
     else {
         cout << "Error at position: " << errorPos << endl;
-        r[errorPos - 1] ^= 1;
+        r[errorPos - 1] ^= 1;   // correct the bit
+
         cout << "Corrected code: ";
         for (int i = 0; i < 7; i++) cout << r[i];
         cout << endl;
     }
 }
 
-// ---------------- MAIN MENU ----------------
 
+// ------------ MAIN MENU ------------
 int main() {
-    int choice;
-    char ch;
+    int ch;
 
-    do {
-        cout << "\n========== ERROR CONTROL MENU ==========\n";
-        cout << "1. Parity Check\n";
-        cout << "2. CRC\n";
+    while (true) {
+        cout << "\n===== MENU =====\n";
+        cout << "1. Even Parity Check\n";
+        cout << "2. CRC Check\n";
         cout << "3. Hamming Code (7,4)\n";
         cout << "4. Exit\n";
-        cout << "Enter your choice: ";
-        cin >> choice;
-
-        switch (choice) {
-            case 1: parityCheck(); break;
-            case 2: crc(); break;
-            case 3: hammingCode(); break;
-            case 4: return 0;
-            default: cout << "Invalid choice!\n";
-        }
-
-        cout << "\nDo you want to continue? (y/n): ";
+        cout << "Enter choice: ";
         cin >> ch;
 
-    } while (ch == 'y' || ch == 'Y');
-
-    return 0;
+        switch (ch) {
+            case 1: parityCheck(); break;
+            case 2: crcCheck(); break;
+            case 3: hammingCheck(); break;
+            case 4: return 0;
+            default: cout << "Invalid choice\n";
+        }
+    }
 }
-________________________________________________________________________________________________________________________________________________________________________________
-SLIDING WINDOW
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------STOP&WAIT/GOBACKN/SELECTIVEARQ-----------------------------------
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
 using namespace std;
 
-void stopAndWaitARQ() {
-    int totalFrames;
-    cout << "\nEnter total number of frames to send: ";
-    cin >> totalFrames;
-    srand(time(0));
-
-    for (int i = 1; i <= totalFrames; i++) {
-        cout << "\nSending Frame " << i << "..." << endl;
-        int ack = rand() % 2; 
-
-        if (ack) {
-            cout << "Acknowledgment received for Frame " << i << endl;
-        } else {
-            cout << "Frame " << i << " lost! Resending..." << endl;
-            cout << "Acknowledgment received for Frame " << i << endl;
-        }
-    }
-    cout << "\nAll frames sent successfully using Stop and Wait ARQ!" << endl;
+// RANDOM ACK GENERATOR (0 = NACK, 1 = ACK)
+int randomACK() {
+    return rand() % 2;
 }
 
-void goBackNARQ() {
-    int totalFrames, windowSize;
-    cout << "\nEnter total number of frames: ";
-    cin >> totalFrames;
-    cout << "Enter window size: ";
-    cin >> windowSize;
-    srand(time(0));
+// ---------------- STOP & WAIT ARQ ----------------
+void stopAndWait() {
+    int frames;
+    cout << "\nEnter number of frames to send: ";
+    cin >> frames;
 
-    int sent = 1;
-    while (sent <= totalFrames) {
-        cout << "\nSending frames: ";
-        for (int i = sent; i < sent + windowSize && i <= totalFrames; i++) {
-            cout << i << " ";
-        }
-        cout << endl;
+    for(int i = 1; i <= frames; i++) {
+        cout << "\nSender: Sending Frame " << i << endl;
 
-        bool allAcked = true;
-        int lostFrame = -1;
-
-        for (int i = sent; i < sent + windowSize && i <= totalFrames; i++) {
-            int status = rand() % 2; 
-            if (status) {
-                cout << "Acknowledgment received for Frame " << i << endl;
-            } else {
-                cout << "Frame " << i << " lost!" << endl;
-                lostFrame = i;
-                allAcked = false;
-                break; 
-            }
-        }
-
-        if (allAcked) {
-            sent += windowSize;
+        int ack = randomACK();
+        if(ack == 1) {
+            cout << "Receiver: ACK received for Frame " << i << endl;
         } else {
-            cout << "Go back and resend from Frame " << lostFrame << endl;
-            sent = lostFrame;
+            cout << "Receiver: NACK (Frame " << i << " lost). Resending..." << endl;
+            i--;  // resend frame
         }
     }
-
-    cout << "\nAll frames sent successfully using Go-Back-N ARQ!" << endl;
+    cout << "\nAll frames sent successfully using Stop-and-Wait ARQ!\n";
 }
 
-void selectiveRepeatARQ() {
-    int totalFrames, windowSize;
-    cout << "\nEnter total number of frames: ";
-    cin >> totalFrames;
+// ---------------- GO BACK N ARQ ----------------
+void goBackN() {
+    int frames, window;
+    cout << "\nEnter number of frames: ";
+    cin >> frames;
     cout << "Enter window size: ";
-    cin >> windowSize;
-    srand(time(0));
+    cin >> window;
 
-    bool ack[100] = {false};
+    int i = 1;
 
-    for (int i = 1; i <= totalFrames; i += windowSize) {
-        cout << "\nSending window: ";
-        for (int j = i; j < i + windowSize && j <= totalFrames; j++) {
+    while(i <= frames) {
+        cout << "\nSender: Sending window frames: ";
+        for(int j = i; j < i + window && j <= frames; j++) {
             cout << j << " ";
         }
         cout << endl;
 
-        for (int j = i; j < i + windowSize && j <= totalFrames; j++) {
-            int received = rand() % 2; 
-            if (received) {
-                cout << "Acknowledgment received for Frame " << j << endl;
-                ack[j] = true;
-            } else {
-                cout << "Frame " << j << " lost!" << endl;
-            }
+        int errorFrame = randomACK(); // random error
+        if(errorFrame == 0) {
+            cout << "Receiver: Error detected! ACK not received." << endl;
+            cout << "Sender: Going back and resending window...\n";
+            // resend same window
+        } else {
+            cout << "Receiver: ACK received for window.\n";
+            i += window; // move window forward
         }
+    }
 
-        for (int j = i; j < i + windowSize && j <= totalFrames; j++) {
-            if (!ack[j]) {
-                cout << "Resending Frame " << j << endl;
-                cout << "Acknowledgment received for Frame " << j << endl;
-                ack[j] = true;
+    cout << "\nAll frames sent successfully using Go-Back-N ARQ!\n";
+}
+
+// ---------------- SELECTIVE REPEAT ARQ ----------------
+void selectiveRepeat() {
+    int frames, window;
+    cout << "\nEnter number of frames: ";
+    cin >> frames;
+    cout << "Enter window size: ";
+    cin >> window;
+
+    int received[100] = {0}; // stores ACK status
+
+    for(int i = 1; i <= frames; i++) {
+        cout << "\nSender: Sending Frame " << i << endl;
+
+        int ack = randomACK();
+
+        if(ack == 1) {
+            cout << "Receiver: ACK received for Frame " << i << endl;
+            received[i] = 1;
+        } else {
+            cout << "Receiver: NACK (Frame " << i << " lost)" << endl;
+            received[i] = 0;
+        }
+    }
+
+    cout << "\nSelective retransmission of only failed frames...\n";
+
+    for(int i = 1; i <= frames; i++) {
+        if(received[i] == 0) {
+            cout << "Resending Frame " << i << endl;
+
+            int ack = randomACK();
+            if(ack == 1) {
+                cout << "Receiver: ACK received for Frame " << i << endl;
+                received[i] = 1;
+            } else {
+                cout << "Still NACK. Sending again...\n";
+                i--;  // resend again
             }
         }
     }
 
-    cout << "\nAll frames sent successfully using Selective Repeat ARQ!" << endl;
+    cout << "\nAll frames sent successfully using Selective Repeat ARQ!\n";
 }
 
+// ---------------- MAIN MENU ----------------
 int main() {
+    srand(time(0)); // random seed
+
     int choice;
-    do {
-        cout << "\n==============================\n";
-        cout << " Sliding Window Mechanisms\n";
-        cout << "==============================\n";
+
+    while(true) {
+        cout << "\n====== SLIDING WINDOW ARQ SIMULATOR ======\n";
         cout << "1. Stop and Wait ARQ\n";
-        cout << "2. Go-Back-N ARQ\n";
+        cout << "2. Go Back N ARQ\n";
         cout << "3. Selective Repeat ARQ\n";
         cout << "4. Exit\n";
-        cout << "------------------------------\n";
-        cout << "Enter your choice: ";
+        cout << "Enter choice: ";
         cin >> choice;
 
-        switch (choice) {
-            case 1:
-                stopAndWaitARQ();
-                break;
-            case 2:
-                goBackNARQ();
-                break;
-            case 3:
-                selectiveRepeatARQ();
-                break;
-            case 4:
-                cout << "Exiting program..." << endl;
-                break;
-            default:
-                cout << "Invalid choice! Please enter 1-4." << endl;
+        switch(choice) {
+            case 1: stopAndWait(); break;
+            case 2: goBackN(); break;
+            case 3: selectiveRepeat(); break;
+            case 4: return 0;
+            default: cout << "Invalid choice!\n";
         }
-    } while (choice != 4);
-
-    cout << "\nProgram finished.\n";
-    return 0;
-}
-
-____________________________________________________________________________________________________________________________________________________________________________________________
-Subnet Calculator
-
-#include <iostream>
-#include <cmath>
-using namespace std;
-
-int main() {
-    int n;
-    cout << "Enter number of subnets required: ";
-    cin >> n;
-
-    // We assume base network 192.168.1.0/24
-    int networkBits = 24;
-    int bitsNeeded = ceil(log2(n));      // Bits to borrow
-    int newPrefix = networkBits + bitsNeeded;  // New CIDR
-    int hostBits = 32 - newPrefix;
-    int totalHosts = pow(2, hostBits);
-    int usableHosts = totalHosts - 2;
-    int increment = totalHosts;          // Subnet increment
-
-    // Create subnet mask
-    unsigned int mask = (0xFFFFFFFF << hostBits);
-    int b1 = (mask >> 24) & 255;
-    int b2 = (mask >> 16) & 255;
-    int b3 = (mask >> 8) & 255;
-    int b4 = mask & 255;
-
-    cout << "\n===== SUBNETTING RESULT =====\n";
-    cout << "Original Network : 192.168.1.0/24\n";
-    cout << "Subnets Required : " << n << endl;
-    cout << "Bits Borrowed    : " << bitsNeeded << endl;
-    cout << "New Prefix       : /" << newPrefix << endl;
-    cout << "Subnet Mask      : " << b1 << "." << b2 << "." << b3 << "." << b4 << endl;
-    cout << "Hosts/Subnet     : " << usableHosts << " usable hosts\n\n";
-
-    cout << "Subnet\tNetwork ID\t\tUsable Range\t\t\tBroadcast\n";
-
-    int base = 0;
-    for (int i = 1; i <= n; i++) {
-        int networkID = base;
-        int firstIP = base + 1;
-        int lastIP = base + totalHosts - 2;
-        int broadcast = base + totalHosts - 1;
-
-        if (broadcast > 255) break;
-
-        cout << i << "\t192.168.1." << networkID
-             << "\t\t192.168.1." << firstIP << " - 192.168.1." << lastIP
-             << "\t192.168.1." << broadcast << endl;
-
-        base += increment;
     }
-
-    return 0;
 }
 
+--------------------------------------------SUBNETCALCULATOR------------------------------------------------
 #include <iostream>
 #include <cmath>
 #include <sstream>
@@ -449,287 +401,120 @@ int main() {
 
     return 0;
 }
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-DVR&&LSR
-#include <iostream>
-using namespace std;
-
-#define INF 999
-
-void DVR(int n, int cost[10][10]) {
-    int dist[10][10], nextHop[10][10];
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            dist[i][j] = cost[i][j];
-            nextHop[i][j] = j;
-        }
-    }
-
-    int updated;
-    do {
-        updated = 0;
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                for (int k = 0; k < n; k++) {
-                    if (dist[i][j] > cost[i][k] + dist[k][j]) {
-                        dist[i][j] = cost[i][k] + dist[k][j];
-                        nextHop[i][j] = k;
-                        updated = 1;
-                    }
-                }
-            }
-        }
-    } while (updated);
-
-    cout << "\n--- Distance Vector Routing Table ---\n";
-    for (int i = 0; i < n; i++) {
-        cout << "Router " << i + 1 << ":\n";
-        for (int j = 0; j < n; j++) {
-            cout << "To " << j + 1 << " via " << nextHop[i][j] + 1
-                 << " distance = " << dist[i][j] << endl;
-        }
-        cout << endl;
-    }
-}
-
-void LSR(int n, int cost[10][10]) {
-    for (int src = 0; src < n; src++) {
-        int dist[10], visited[10];
-        for (int i = 0; i < n; i++) {
-            dist[i] = cost[src][i];
-            visited[i] = 0;
-        }
-        dist[src] = 0;
-        visited[src] = 1;
-
-        for (int count = 1; count < n - 1; count++) {
-            int min = INF, u = -1;
-            for (int i = 0; i < n; i++)
-                if (!visited[i] && dist[i] < min) {
-                    min = dist[i];
-                    u = i;
-                }
-            visited[u] = 1;
-            for (int v = 0; v < n; v++) {
-                if (!visited[v] && dist[v] > dist[u] + cost[u][v])
-                    dist[v] = dist[u] + cost[u][v];
-            }
-        }
-        cout << "\nRouting Table for Node " << src + 1 << ":\n";
-        for (int i = 0; i < n; i++)
-            cout << "To " << i + 1 << " distance = " << dist[i] << endl;
-    }
-}
-
-int main() {
-    int n, choice;
-    int cost[10][10];
-    char ch;
-
-    cout << "Enter number of nodes: ";
-    cin >> n;
-
-    cout << "Enter cost matrix (use 999 for no direct link):\n";
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            cin >> cost[i][j];
-        }
-    }
-
-   do{
-     cout << "\nSelect Routing Algorithm:\n";
-    cout << "1. Distance Vector Routing (DVR)\n";
-    cout << "2. Link State Routing (LSR)\n";
-    cout << "Enter your choice: ";
-    cin >> choice;
-
-    switch (choice) {
-        case 1:
-            DVR(n, cost);
-            break;
-        case 2:
-            LSR(n, cost);
-            break;
-        default:
-            cout << "Invalid choice!";
-    }
-    cout<<"do you want to continue(y/n): ";
-    cin>>ch;
-   }while(ch == 'y' || ch == 'Y');
-
-    return 0;
-}
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-tcp_server
-#include <iostream>
-#include <cstring>
-#include <unistd.h>
+-------------------------------------------------------------------tcp server----------------------------------------------------------------------------
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
-using namespace std;
 
 int main() {
-    int serverSocket, newSocket;
-    char buffer[1024];
+    int sock, client;
+    char message[2000];
+    struct sockaddr_in server, client_addr;
+    int addr_len = sizeof(client_addr);
 
-    // Create socket
-    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    printf("TCP Server Started...\n");
 
-    struct sockaddr_in serverAddr;
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(8080);
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = INADDR_ANY;
+    server.sin_port = htons(8080);
 
-    // Bind
-    bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+    bind(sock, (struct sockaddr *)&server, sizeof(server));
+    listen(sock, 3);
 
-    // Listen
-    listen(serverSocket, 3);
-    cout << "Server waiting for connection..." << endl;
+    printf("Waiting for client...\n");
+    client = accept(sock, (struct sockaddr *)&client_addr, &addr_len);
+    printf("Client Connected.\n");
 
-    socklen_t addrSize = sizeof(serverAddr);
-    newSocket = accept(serverSocket, (struct sockaddr*)&serverAddr, &addrSize);
-    cout << "Client connected!" << endl;
+    recv(client, message, 2000, 0);
+    printf("Client: %s\n", message);
 
-    while (1) {
-        memset(buffer, 0, sizeof(buffer));
+    send(client, "Message Received by Server", 27, 0);
 
-        // Receive message from client
-        int val = read(newSocket, buffer, 1024);
-        if (val <= 0) {
-            cout << "Client disconnected." << endl;
-            break;
-        }
-        cout << "Client: " << buffer << endl;
-
-        // Send reply
-        cout << "Server: ";
-        string reply;
-        getline(cin, reply);
-
-        send(newSocket, reply.c_str(), reply.length(), 0);
-    }
-
-    close(newSocket);
-    close(serverSocket);
     return 0;
 }
--------------------------------------------------------------------------------
-tcp_client
-#include <iostream>
-#include <cstring>
-#include <unistd.h>
+--------------------------------tcp client---------------------------------------------------------------------------------
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
-using namespace std;
 
 int main() {
-    int clientSocket;
-    char buffer[1024];
+    int sock;
+    char server_reply[2000];
+    struct sockaddr_in server;
 
-    // Create socket
-    clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+    sock = socket(AF_INET, SOCK_STREAM, 0);
 
-    struct sockaddr_in serverAddr;
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(8080);
-    serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_family = AF_INET;
+    server.sin_port = htons(8080);
 
-    // Connect
-    connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
-    cout << "Connected to Server!" << endl;
+    connect(sock, (struct sockaddr *)&server, sizeof(server));
 
-    while (1) {
-        // Send message to server
-        cout << "Client: ";
-        string msg;
-        getline(cin, msg);
+    send(sock, "Hello Server, this is TCP Client", 32, 0);
+    recv(sock, server_reply, 2000, 0);
 
-        send(clientSocket, msg.c_str(), msg.length(), 0);
+    printf("Server: %s\n", server_reply);
 
-        memset(buffer, 0, sizeof(buffer));
-
-        // Receive reply
-        int val = read(clientSocket, buffer, 1024);
-        if (val <= 0) {
-            cout << "Server disconnected." << endl;
-            break;
-        }
-
-        cout << "Server: " << buffer << endl;
-    }
-
-    close(clientSocket);
     return 0;
 }
-udp server
-#include <iostream>
-#include <cstring>
-#include <unistd.h>
+------------------------------------------------------------udp server---------------------------------------------------------------------------------
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
-using namespace std;
 
 int main() {
-    int serverSocket;
-    char buffer[1024] = {0};
+    int sock;
+    char buffer[2000];
+    struct sockaddr_in server, client;
+    int client_len = sizeof(client);
 
-    serverSocket = socket(AF_INET, SOCK_DGRAM, 0);
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
 
-    struct sockaddr_in serverAddr, clientAddr;
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(8080);
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = INADDR_ANY;
+    server.sin_port = htons(9090);
 
-    bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+    bind(sock, (struct sockaddr *)&server, sizeof(server));
 
-    cout << "UDP Server waiting for messages..." << endl;
+    printf("UDP Server Running...\n");
 
-    socklen_t len = sizeof(clientAddr);
+    recvfrom(sock, buffer, 2000, 0, (struct sockaddr *)&client, &client_len);
+    printf("Client: %s\n", buffer);
 
-    recvfrom(serverSocket, buffer, 1024, 0, (struct sockaddr*)&clientAddr, &len);
-    cout << "Client says: " << buffer << endl;
+    sendto(sock, "Message received by UDP Server", 30, 0,
+           (struct sockaddr *)&client, client_len);
 
-    char msg[] = "Hello from UDP Server!";
-    sendto(serverSocket, msg, strlen(msg), 0, (struct sockaddr*)&clientAddr, len);
-
-    close(serverSocket);
     return 0;
 }
-udp client
-#include <iostream>
-#include <cstring>
-#include <unistd.h>
+------------------------------------------------------------------udp client----------------------------------------------------------------------------------------------------
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
-using namespace std;
 
 int main() {
-    int clientSocket;
-    char buffer[1024] = {0};
+    int sock;
+    char buffer[2000];
+    struct sockaddr_in server;
 
-    clientSocket = socket(AF_INET, SOCK_DGRAM, 0);
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
 
-    struct sockaddr_in serverAddr;
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(8080);
-    serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_family = AF_INET;
+    server.sin_port = htons(9090);
 
-    char msg[] = "Hello UDP Server!";
-    sendto(clientSocket, msg, strlen(msg), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+    sendto(sock, "Hello UDP Server", 17, 0,
+           (struct sockaddr *)&server, sizeof(server));
 
-    socklen_t len = sizeof(serverAddr);
-    recvfrom(clientSocket, buffer, 1024, 0, (struct sockaddr*)&serverAddr, &len);
+    int len = sizeof(server);
+    recvfrom(sock, buffer, 2000, 0, (struct sockaddr *)&server, &len);
 
-    cout << "Server says: " << buffer << endl;
+    printf("Server: %s\n", buffer);
 
-    close(clientSocket);
     return 0;
 }
-
-| Pin No. | Side A (568-B Colors) | Side B (Crossover Colors) |
-| ------- | --------------------- | ------------------------- |
-| **1**   | White–Orange          | White–Green               |
-| **2**   | Orange                | Green                     |
-| **3**   | White–Green           | White–Orange              |
-| **4**   | Blue                  | Blue                      |
-| **5**   | White–Blue            | White–Blue                |
-| **6**   | Green                 | Orange                    |
-| **7**   | White–Brown           | White–Brown               |
-| **8**   | Brown                 | Brown                     |
+-------------------------------------------------------------------------------------------------------------------------------------------------------
