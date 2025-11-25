@@ -401,6 +401,116 @@ int main() {
 
     return 0;
 }
+-------------------------------------DVR AND LSR----------------------------------------------------------
+#include <iostream>
+using namespace std;
+
+#define INF 999
+
+void DVR(int n, int cost[10][10]) {
+    int dist[10][10], nextHop[10][10];
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            dist[i][j] = cost[i][j];
+            nextHop[i][j] = j;
+        }
+    }
+
+    int updated;
+    do {
+        updated = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                for (int k = 0; k < n; k++) {
+                    if (dist[i][j] > cost[i][k] + dist[k][j]) {
+                        dist[i][j] = cost[i][k] + dist[k][j];
+                        nextHop[i][j] = k;
+                        updated = 1;
+                    }
+                }
+            }
+        }
+    } while (updated);
+
+    cout << "\n--- Distance Vector Routing Table ---\n";
+    for (int i = 0; i < n; i++) {
+        cout << "Router " << i + 1 << ":\n";
+        for (int j = 0; j < n; j++) {
+            cout << "To " << j + 1 << " via " << nextHop[i][j] + 1
+                 << " distance = " << dist[i][j] << endl;
+        }
+        cout << endl;
+    }
+}
+
+void LSR(int n, int cost[10][10]) {
+    for (int src = 0; src < n; src++) {
+        int dist[10], visited[10];
+        for (int i = 0; i < n; i++) {
+            dist[i] = cost[src][i];
+            visited[i] = 0;
+        }
+        dist[src] = 0;
+        visited[src] = 1;
+
+        for (int count = 1; count < n - 1; count++) {
+            int min = INF, u = -1;
+            for (int i = 0; i < n; i++)
+                if (!visited[i] && dist[i] < min) {
+                    min = dist[i];
+                    u = i;
+                }
+            visited[u] = 1;
+            for (int v = 0; v < n; v++) {
+                if (!visited[v] && dist[v] > dist[u] + cost[u][v])
+                    dist[v] = dist[u] + cost[u][v];
+            }
+        }
+        cout << "\nRouting Table for Node " << src + 1 << ":\n";
+        for (int i = 0; i < n; i++)
+            cout << "To " << i + 1 << " distance = " << dist[i] << endl;
+    }
+}
+
+int main() {
+    int n, choice;
+    int cost[10][10];
+    char ch;
+
+    cout << "Enter number of nodes: ";
+    cin >> n;
+
+    cout << "Enter cost matrix (use 999 for no direct link):\n";
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cin >> cost[i][j];
+        }
+    }
+
+   do{
+     cout << "\nSelect Routing Algorithm:\n";
+    cout << "1. Distance Vector Routing (DVR)\n";
+    cout << "2. Link State Routing (LSR)\n";
+    cout << "Enter your choice: ";
+    cin >> choice;
+
+    switch (choice) {
+        case 1:
+            DVR(n, cost);
+            break;
+        case 2:
+            LSR(n, cost);
+            break;
+        default:
+            cout << "Invalid choice!";
+    }
+    cout<<"do you want to continue(y/n): ";
+    cin>>ch;
+   }while(ch == 'y' || ch == 'Y');
+
+    return 0;
+}
+
 -------------------------------------------------------------------tcp server----------------------------------------------------------------------------
 #include <stdio.h>
 #include <string.h>
